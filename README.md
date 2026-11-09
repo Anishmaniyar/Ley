@@ -2,6 +2,10 @@
 
 Ley is a minimal, single-node, in-memory, log-based messaging broker for V0.1. Producers publish JSON messages over HTTP. Consumers pull messages by offset and track their own progress.
 
+## V 0.1 - Architecture Design
+
+<img width="1536" height="1024" alt="image" src="https://github.com/user-attachments/assets/88be14f8-39f7-41df-b971-eb824480eed5" />
+
 ## Technology stack
 
 - TypeScript (ES modules)
