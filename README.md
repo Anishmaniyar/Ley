@@ -6,6 +6,10 @@ Ley is a minimal, single-node, in-memory, log-based messaging broker. Producers 
 
 Versioned architecture, decisions, and build history live in [`docs/`](./docs/README.md). Start with [V0.1](./docs/v0.1/architecture.md) for the broker foundation and [V0.2](./docs/v0.2/architecture.md) for the consumer retry runtime.
 
+## V 0.1 - Architecture Design
+
+<img width="1536" height="1024" alt="image" src="https://github.com/user-attachments/assets/88be14f8-39f7-41df-b971-eb824480eed5" />
+
 ## Technology stack
 
 - TypeScript (ES modules)
