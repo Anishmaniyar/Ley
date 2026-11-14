@@ -1,6 +1,10 @@
 # Ley - Event Streaming Engine
 
-Ley is a minimal, single-node, in-memory, log-based messaging broker for V0.1. Producers publish JSON messages over HTTP. Consumers pull messages by offset and track their own progress.
+Ley is a minimal, single-node, in-memory, log-based messaging broker. Producers publish JSON messages over HTTP. Consumers pull messages by offset and track their own progress.
+
+## Documentation
+
+Versioned architecture, decisions, and build history live in [`docs/`](./docs/README.md). Start with [V0.1](./docs/v0.1/architecture.md) for the broker foundation and [V0.2](./docs/v0.2/architecture.md) for the consumer retry runtime.
 
 ## Technology stack
 

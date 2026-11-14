@@ -5,8 +5,10 @@
   "main": "index.js",
   "scripts": {
     "dev:broker": "tsx watch src/broker/server.ts",
-    "dev:order": "tsx watch examples/order-service/index.ts",
-    "dev:notification": "tsx watch examples/notification-serivce/index.ts",
+    "dev:order": "tsx watch examples/producer/order-service/index.ts",
+    "dev:inventory": "tsx watch examples/producer/inventory-service/index.ts",
+    "dev:payment": "tsx watch examples/producer/payment-service/index.ts",
+    "dev:notification": "tsx watch examples/consumer/notification-service/index.ts",
     "test": "vitest run",
     "test:unit": "vitest run tests/unit",
     "test:integration": "vitest run tests/integration",

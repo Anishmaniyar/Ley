@@ -40,13 +40,13 @@ async function publishOrder() {
     if (!response.ok) {
       const errorData = (await response.json()) as { message: string };
       throw new Error(
-        `Broker rejected message: ${response.status} - ${errorData.message}`,
+        `Broker rejected Order message: ${response.status} - ${errorData.message}`,
       );
     }
 
     const data = (await response.json()) as { offset: number };
 
-    console.log("Broker accepted message.");
+    console.log("Broker accepted Order message.");
     console.log("Assigned offset:", data.offset);
   } catch (error) {
     console.error("Failed to publish order:", error);

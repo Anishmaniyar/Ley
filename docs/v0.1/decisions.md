@@ -1,4 +1,7 @@
-# Decisions
+# Ley V0.1 — Decisions
+
+> Historical record. These are the decisions that shaped the V0.1 broker, before the
+> V0.2 consumer retry and ordering work.
 
 ## Why an in-memory array?
 

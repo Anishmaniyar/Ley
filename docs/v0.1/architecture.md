@@ -1,4 +1,7 @@
-# Architecture
+# Ley V0.1 — Broker Architecture
+
+> Historical record. This document describes the broker as it existed in V0.1, before the
+> consumer retry system and ordering guarantees introduced in V0.2.
 
 ## Overview
 
@@ -70,3 +73,13 @@ Controllers and services throw `AppError` for invalid input. The error middlewar
 - An empty log or an offset beyond the log length returns an empty `messages` array.
 - Invalid offset or limit values return `400`.
 - Unknown routes return `404`.
+
+## Known limitations in V0.1
+
+- Single node, in-memory only. Broker restart loses all messages.
+- No persistence, replication, or durability guarantees.
+- No consumer groups, subscriptions, or broker-managed offsets.
+- Pull-based consumption only.
+- No message deletion, retention, compaction, or TTL.
+- No authentication, authorization, TLS, or rate limiting.
+- No retry handling, dead-letter queue, or graceful shutdown coordination in the example consumer.

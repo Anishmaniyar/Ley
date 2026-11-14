@@ -13,12 +13,9 @@ export function publishMessage(input: unknown): number {
     throw new AppError("Invalid message structure", 400);
   }
 
-  // Determine next ofset and append the validated message to the log
-  // THIS WORKS FOR NOW LATER WHEN WE DO CONCURRENT AND ASYNCHRONOURS STORAGE REVISIT
-  const offset = length();
-
   // Append the validated message to the log
-  append(result.data);
+  // IN THIS append function we are doing both the find offset means length of the array the push the value
+  const offset = append(result.data);
 
   return offset;
 }
