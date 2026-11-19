@@ -32,9 +32,9 @@ export class PriorityQueue<T> {
       }
 
       // Swap child and parent
-      [[this.heap[index]], [this.heap[parentIndex]]] = [
-        [this.heap[parentIndex]],
-        [this.heap[index]],
+      [this.heap[index], this.heap[parentIndex]] = [
+        this.heap[parentIndex],
+        this.heap[index],
       ];
 
       // Move pointer up to the parent's position and continue checking

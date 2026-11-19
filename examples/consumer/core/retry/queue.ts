@@ -1,5 +1,5 @@
 import { PriorityQueue } from "../../shared/min-heap.js";
-import type { RetryEntry } from "./retry-entry.js";
+import type { RetryEntry } from "./entry.js";
 
 // When consumer fails processin we try to store its value in retry queue which is an encapsulation of an priority queue and this is it
 export class RetryQueue {

@@ -1,19 +1,22 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { Mutex } from "../../examples/consumer/shared/async-mutex.js";
+import { Mutex } from "../../examples/consumer/core/async-mutex.js";
 import { PriorityQueue } from "../../examples/consumer/shared/min-heap.js";
 import { WakeUpSignal } from "../../examples/consumer/shared/wake-up_signal.js";
-import { RetryQueue } from "../../examples/consumer/notification-service/retry/retry-queue.js";
-import { RetryScheduler } from "../../examples/consumer/notification-service/retry/retry-scheduler.js";
-import { calculateDelay } from "../../examples/consumer/notification-service/retry/retry-delay.js";
-import type { RetryEntry } from "../../examples/consumer/notification-service/retry/retry-entry.js";
-import { processMessage } from "../../examples/consumer/notification-service/processing/message-processor.js";
-import {
-  BASE_RETRY_DELAY_MS,
-  BACKOFF_MULTIPLIER,
-  JITTER_FACTOR,
-  MAX_RETRY_DELAY_MS,
-  MAX_RETRIES,
-} from "../../examples/consumer/notification-service/config.js";
+import { RetryQueue } from "../../examples/consumer/core/retry/queue.js";
+import { RetryScheduler } from "../../examples/consumer/core/retry/scheduler.js";
+import { calculateDelay } from "../../examples/consumer/core/retry/delay.js";
+import type { RetryEntry } from "../../examples/consumer/core/retry/entry.js";
+import { notificationProcessor as processMessage } from "../../examples/consumer/application/notification/processor.js";
+import { resolveConsumerConfig } from "../../examples/consumer/core/config.js";
+
+const testConfig = resolveConsumerConfig();
+const {
+  maxRetryDelayMs: MAX_RETRY_DELAY_MS,
+  baseRetryDelayMs: BASE_RETRY_DELAY_MS,
+  backoffMultiplier: BACKOFF_MULTIPLIER,
+  jitterFactor: JITTER_FACTOR,
+  maxRetries: MAX_RETRIES,
+} = testConfig;
 import type { Message } from "../../src/broker/modules/message/message.js";
 
 function message(key: string): Message {
@@ -248,9 +251,9 @@ describe("calculateDelay", () => {
   it("applies exponential backoff", () => {
     vi.spyOn(Math, "random").mockReturnValue(0.5);
 
-    expect(calculateDelay(0)).toBe(BASE_RETRY_DELAY_MS);
-    expect(calculateDelay(1)).toBe(BASE_RETRY_DELAY_MS * BACKOFF_MULTIPLIER);
-    expect(calculateDelay(2)).toBe(
+    expect(calculateDelay(0, testConfig)).toBe(BASE_RETRY_DELAY_MS);
+    expect(calculateDelay(1, testConfig)).toBe(BASE_RETRY_DELAY_MS * BACKOFF_MULTIPLIER);
+    expect(calculateDelay(2, testConfig)).toBe(
       BASE_RETRY_DELAY_MS * BACKOFF_MULTIPLIER ** 2,
     );
   });
@@ -259,26 +262,26 @@ describe("calculateDelay", () => {
     const random = vi.spyOn(Math, "random");
 
     random.mockReturnValue(0);
-    expect(calculateDelay(0)).toBe(BASE_RETRY_DELAY_MS * (1 - JITTER_FACTOR));
+    expect(calculateDelay(0, testConfig)).toBe(BASE_RETRY_DELAY_MS * (1 - JITTER_FACTOR));
 
     random.mockReturnValue(1);
-    expect(calculateDelay(0)).toBe(BASE_RETRY_DELAY_MS * (1 + JITTER_FACTOR));
+    expect(calculateDelay(0, testConfig)).toBe(BASE_RETRY_DELAY_MS * (1 + JITTER_FACTOR));
   });
 
   it("never exceeds the maximum retry delay", () => {
     const random = vi.spyOn(Math, "random");
 
     random.mockReturnValue(0.5);
-    expect(calculateDelay(10)).toBe(MAX_RETRY_DELAY_MS);
+    expect(calculateDelay(10, testConfig)).toBe(MAX_RETRY_DELAY_MS);
 
     random.mockReturnValue(1);
-    expect(calculateDelay(10)).toBe(MAX_RETRY_DELAY_MS);
+    expect(calculateDelay(10, testConfig)).toBe(MAX_RETRY_DELAY_MS);
   });
 
   it.each([-1, 1.5, Number.NaN, Number.POSITIVE_INFINITY])(
     "rejects an invalid retry count: %s",
     (retryCount) => {
-      expect(() => calculateDelay(retryCount)).toThrow(RangeError);
+      expect(() => calculateDelay(retryCount, testConfig)).toThrow(RangeError);
     },
   );
 });
@@ -292,7 +295,7 @@ describe("RetryScheduler", () => {
     const processed: string[] = [];
     const scheduler = new RetryScheduler(queue, new WakeUpSignal(), async (due) => {
       processed.push(due.key);
-    });
+    }, testConfig);
 
     queue.enqueue(retryEntry("late", Date.now() + 2000));
     scheduler.start();
@@ -318,7 +321,7 @@ describe("RetryScheduler", () => {
       if (attempts === 1) {
         throw new Error("temporary failure");
       }
-    });
+    }, testConfig);
 
     queue.enqueue(retryEntry("flaky", Date.now()));
     scheduler.start();
@@ -347,7 +350,7 @@ describe("RetryScheduler", () => {
     const scheduler = new RetryScheduler(queue, new WakeUpSignal(), async () => {
       attempts++;
       throw new Error("permanent failure");
-    });
+    }, testConfig);
 
     queue.enqueue(retryEntry("doomed", Date.now()));
     scheduler.start();
@@ -368,7 +371,7 @@ describe("RetryScheduler", () => {
 
   it("refuses new retries before starting and after stopping", async () => {
     const queue = new RetryQueue();
-    const scheduler = new RetryScheduler(queue, new WakeUpSignal(), async () => {});
+    const scheduler = new RetryScheduler(queue, new WakeUpSignal(), async () => {}, testConfig);
     const entry = retryEntry("entry", Date.now());
 
     expect(scheduler.scheduleRetry(entry)).toBe(false);
@@ -397,7 +400,7 @@ describe("RetryScheduler", () => {
       started();
       await gate;
       throw new Error("failed while shutting down");
-    });
+    }, testConfig);
 
     queue.enqueue(retryEntry("shutdown", Date.now()));
     scheduler.start();

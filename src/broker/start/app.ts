@@ -1,8 +1,8 @@
 import express from "express";
 import type { Request, Response } from "express";
 import rootRouter from "./route.js";
-import { notFoundMiddleware } from "../middlewares/not-found.middlewares.js";
-import { errorMiddleware } from "../middlewares/error.middlewares.js";
+import { notFoundMiddleware } from "../../middlewares/not-found.middlewares.js";
+import { errorMiddleware } from "../../middlewares/error.middlewares.js";
 
 const app = express();
 

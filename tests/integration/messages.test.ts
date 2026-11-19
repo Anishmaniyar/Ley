@@ -8,7 +8,7 @@ let app: Express;
 // Reset modules so each test gets a fresh app and a fresh in-memory log.
 beforeEach(async () => {
   vi.resetModules();
-  app = (await import("../../src/broker/app.js")).default;
+  app = (await import("../../src/broker/start/app.js")).default;
 });
 
 function validMessage(overrides: Partial<Message> = {}): Message {
@@ -214,7 +214,7 @@ describe("HTTP message API", () => {
     await publish(validMessage({ key: "before-restart" }));
 
     vi.resetModules();
-    const restartedApp = (await import("../../src/broker/app.js")).default;
+    const restartedApp = (await import("../../src/broker/start/app.js")).default;
     const response = await request(restartedApp)
       .get("/api/v1/messages")
       .query({ offset: "0", limit: "10" });

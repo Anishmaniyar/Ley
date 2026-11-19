@@ -1,28 +1,26 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { Message } from "../../src/broker/modules/message/message.js";
-import { Mutex } from "../../examples/consumer/shared/async-mutex.js";
+import { Mutex } from "../../examples/consumer/core/async-mutex.js";
 import { WakeUpSignal } from "../../examples/consumer/shared/wake-up_signal.js";
-import { OffsetManager } from "../../examples/consumer/notification-service/offset/offset-manager.js";
-import { RetryQueue } from "../../examples/consumer/notification-service/retry/retry-queue.js";
-import { RetryScheduler } from "../../examples/consumer/notification-service/retry/retry-scheduler.js";
-import { calculateDelay } from "../../examples/consumer/notification-service/retry/retry-delay.js";
-import type { RetryEntry } from "../../examples/consumer/notification-service/retry/retry-entry.js";
-import {
-  BATCH_SIZE,
-  POLL_INTERVAL_MS,
-} from "../../examples/consumer/notification-service/config.js";
+import { OffsetManager } from "../../examples/consumer/core/offset/offset-management.js";
+import { RetryQueue } from "../../examples/consumer/core/retry/queue.js";
+import { RetryScheduler } from "../../examples/consumer/core/retry/scheduler.js";
+import { calculateDelay } from "../../examples/consumer/core/retry/delay.js";
+import type { RetryEntry } from "../../examples/consumer/core/retry/entry.js";
+import { resolveConsumerConfig } from "../../examples/consumer/core/config.js";
 
 // Keep retry timings small so integration tests stay fast. Jitter is disabled
 // so the number and order of attempts is deterministic.
-vi.mock("../../examples/consumer/notification-service/config.js", () => ({
-  BATCH_SIZE: 10,
-  POLL_INTERVAL_MS: 5,
-  MAX_RETRIES: 3,
-  BASE_RETRY_DELAY_MS: 50,
-  MAX_RETRY_DELAY_MS: 200,
-  BACKOFF_MULTIPLIER: 2,
-  JITTER_FACTOR: 0,
-}));
+const testConfig = resolveConsumerConfig({
+  pollIntervalMs: 5,
+  maxRetries: 3,
+  baseRetryDelayMs: 50,
+  maxRetryDelayMs: 200,
+  backoffMultiplier: 2,
+  jitterFactor: 0,
+});
+const BATCH_SIZE = testConfig.batchSize;
+const POLL_INTERVAL_MS = testConfig.pollIntervalMs;
 
 type BrokerModule = typeof import("../../src/broker/modules/broker/broker.service.js");
 type FetchBatch = (
@@ -114,6 +112,7 @@ class ConsumerHarness {
       this.retryQueue,
       this.wakeUpSignal,
       this.processMessageSafely,
+      testConfig,
     );
   }
 
@@ -221,7 +220,7 @@ class ConsumerHarness {
           const entry: RetryEntry = {
             message: failedMessage,
             retryCount: 0,
-            nextRetryAt: Date.now() + calculateDelay(0),
+            nextRetryAt: Date.now() + calculateDelay(0, testConfig),
             lastError: {
               name: error instanceof Error ? error.name : "Error",
               message: error instanceof Error ? error.message : String(error),

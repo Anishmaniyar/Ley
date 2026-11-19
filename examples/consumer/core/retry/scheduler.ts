@@ -1,8 +1,9 @@
-import { RetryQueue } from "./retry-queue";
+import { RetryQueue } from "./queue";
 import { WakeUpSignal } from "../../shared/wake-up_signal";
-import { RetryEntry } from "./retry-entry";
-import { calculateDelay } from "./retry-delay";
-import { MAX_RETRIES } from "../config";
+import { RetryEntry } from "./entry";
+import { calculateDelay } from "./delay";
+import type { ConsumerConfig } from "../config.js";
+
 type MessageProcessor = (message: RetryEntry["message"]) => Promise<void>;
 
 export class RetryScheduler {
@@ -23,6 +24,7 @@ export class RetryScheduler {
     private readonly retryQueue: RetryQueue,
     private readonly wakeUpSignal: WakeUpSignal,
     private readonly processMessage: MessageProcessor,
+    private readonly config: ConsumerConfig,
   ) {}
 
   // executes the scheduler
@@ -70,13 +72,14 @@ export class RetryScheduler {
           stack: error instanceof Error ? error.stack : undefined,
         };
 
-        if (dueEntry.retryCount >= MAX_RETRIES) {
+        if (dueEntry.retryCount >= this.config.maxRetries) {
           this.deadLetters.push(dueEntry);
           console.error("Maximum retries exhausted:", dueEntry.message.key);
           continue;
         }
 
-        dueEntry.nextRetryAt = Date.now() + calculateDelay(dueEntry.retryCount);
+        dueEntry.nextRetryAt =
+          Date.now() + calculateDelay(dueEntry.retryCount, this.config);
 
         // A shutdown may have started while the failure was being handled.
         if (!this.running) {

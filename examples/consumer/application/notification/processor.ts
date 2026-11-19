@@ -1,23 +1,17 @@
 import { Message } from "../../../../src/broker/modules/message/message";
-
-export interface ProcessMessageOptions {
-  delayMs?: number;
-  failureRate?: number;
-  random?: () => number;
-}
+import {
+  FAILURE_OPTION_NOTIFICATION_CONFIG,
+  type NotificationFailureOptionConfig,
+} from "./config";
 
 // Handles notification processing.
 // 60% of attempts succeed and 40% throw so retry, backoff, and shutdown paths
 // can be exercised end to end. Both values are injectable for deterministic tests.
-export async function processMessage(
+export async function notificationProcessor(
   message: Message,
-  options: ProcessMessageOptions = {},
+  overrides: Partial<NotificationFailureOptionConfig> = {},
 ): Promise<void> {
-  const {
-    delayMs = 5000,
-    failureRate = 0.4,
-    random = Math.random,
-  } = options;
+  const config = { ...FAILURE_OPTION_NOTIFICATION_CONFIG, ...overrides };
 
   console.log("New message received:", message.key);
   console.log("Event:", message.value.event_type);
@@ -26,13 +20,15 @@ export async function processMessage(
 
   console.log("Processing notification...");
 
+  const randomVal = (config.random ?? Math.random)();
+
   // Simulate asynchronous notification delivery.
   await new Promise<void>((resolve) => {
-    setTimeout(resolve, delayMs);
+    setTimeout(resolve, config.delayMs);
   });
 
   // The delivery attempt fails for the configured share of messages.
-  if (random() < failureRate) {
+  if (randomVal < config.failureRate) {
     throw new Error(`Notification delivery failed for ${message.key}`);
   }
 

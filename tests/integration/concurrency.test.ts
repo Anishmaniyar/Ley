@@ -38,7 +38,7 @@ function concurrentMessage(index: number): Message {
 
 beforeAll(async () => {
   vi.resetModules();
-  const app = (await import("../../src/broker/app.js")).default as Express;
+  const app = (await import("../../src/broker/start/app.js")).default as Express;
 
   server = app.listen(0);
   await once(server, "listening");
@@ -134,7 +134,7 @@ async function withFreshBroker<T>(
   run: (freshServer: Server) => Promise<T>,
 ): Promise<T> {
   vi.resetModules();
-  const app = (await import("../../src/broker/app.js")).default as Express;
+  const app = (await import("../../src/broker/start/app.js")).default as Express;
   const freshServer = app.listen(0);
   await once(freshServer, "listening");
 
